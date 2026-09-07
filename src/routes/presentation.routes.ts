@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { fromTextHandler } from "../controllers/fromText.controller";
 import { fromProHandler } from "../controllers/fromPro.controller";
+import { fromProV2Handler } from "../controllers/fromProV2.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
@@ -64,3 +65,36 @@ presentationRouter.post("/from-text", asyncHandler(fromTextHandler));
  *         $ref: '#/components/responses/ServerError'
  */
 presentationRouter.post("/from-pro", upload.single("file"), asyncHandler(fromProHandler));
+
+/**
+ * @openapi
+ * /api/presentations/v2/from-pro:
+ *   post:
+ *     tags: [presentations]
+ *     summary: >
+ *       Fill in the missing translation on an existing .pro presentation
+ *       (v2 - supports lyric lines wrapped across multiple `\cb3` runs)
+ *     description: >
+ *       Same as /from-pro, but reads the primary (fs104) lyric text by
+ *       concatenating every `\cb3 <text>` run in the rtf body, so a lyric
+ *       line that wraps into a second `\par\pard...\cb3` segment within the
+ *       same text box is translated as one combined line instead of only
+ *       its last segment.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/FromProRequest'
+ *           encoding:
+ *             file:
+ *               contentType: application/octet-stream
+ *     responses:
+ *       '200':
+ *         $ref: '#/components/responses/ProFile'
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
+ *       '500':
+ *         $ref: '#/components/responses/ServerError'
+ */
+presentationRouter.post("/v2/from-pro", upload.single("file"), asyncHandler(fromProV2Handler));
