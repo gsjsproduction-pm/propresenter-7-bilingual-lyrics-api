@@ -27,8 +27,10 @@ export async function fromProHandler(req: Request, res: Response): Promise<void>
   );
   const proBuffer = await encodePresentation(filledText);
 
-  const savedPath = await saveOutputFile(`${safeName} TRANSLATED.pro`, proBuffer);
-  console.log(`Saved presentation to ${savedPath}`);
+  if (process.env.NODE_ENV === "local") {
+    const savedPath = await saveOutputFile(`${safeName} TRANSLATED.pro`, proBuffer);
+    console.log(`Saved presentation to ${savedPath}`);
+  }
 
   res.setHeader("Content-Type", "application/octet-stream");
   res.setHeader("Content-Disposition", `attachment; filename="${safeName} TRANSLATED.pro"`);

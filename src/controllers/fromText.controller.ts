@@ -56,8 +56,10 @@ export async function fromTextHandler(req: Request, res: Response): Promise<void
   const proBuffer = await encodePresentation(decodedOutput);
 
   const safeName = fileName.trim().replace(/[\\/:*?"<>|]/g, "_");
-  const savedPath = await saveOutputFile(`${safeName}.pro`, proBuffer);
-  console.log(`Saved presentation to ${savedPath}`);
+  if (process.env.NODE_ENV === "local") {
+    const savedPath = await saveOutputFile(`${safeName}.pro`, proBuffer);
+    console.log(`Saved presentation to ${savedPath}`);
+  }
 
   res.setHeader("Content-Type", "application/octet-stream");
   res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pro"`);
