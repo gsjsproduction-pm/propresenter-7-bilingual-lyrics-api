@@ -1,0 +1,82 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+env:
+  RELEASES_TO_KEEP: 3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Set release name
+        id: release
+        run: echo "name=$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
+
+      - name: Package release artifact
+        run: |
+          mkdir -p release_package
+          cp -r dist release_package/dist
+          cp package.json package-lock.json ecosystem.config.js release_package/
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload release to server
+        env:
+          RELEASE_NAME: ${{ steps.release.outputs.name }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "mkdir -p ${DEPLOY_PATH}/releases/${RELEASE_NAME}"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no" \
+            release_package/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${DEPLOY_PATH}/releases/${RELEASE_NAME}/"
+
+      - name: Install production deps, symlink, and reload
+        env:
+          RELEASE_NAME: ${{ steps.release.outputs.name }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<'EOF'
+            set -e
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            RELEASE_NAME="${{ steps.release.outputs.name }}"
+            RELEASE_DIR="$DEPLOY_PATH/releases/$RELEASE_NAME"
+
+            cd "$RELEASE_DIR"
+            npm ci --omit=dev
+
+            ln -sfn "$RELEASE_DIR" "$DEPLOY_PATH/current"
+
+            cd "$DEPLOY_PATH/current"
+            pm2 startOrReload ecosystem.config.js
+
+            cd "$DEPLOY_PATH/releases"
+            ls -1t | tail -n +$((${{ env.RELEASES_TO_KEEP }} + 1)) | xargs -r rm -rf
+          EOF
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
