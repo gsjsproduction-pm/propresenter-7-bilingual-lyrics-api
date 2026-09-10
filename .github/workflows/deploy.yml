@@ -61,7 +61,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<'EOF'
             set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            DEPLOY_PATH=$(eval echo "${{ secrets.DEPLOY_PATH }}")
             RELEASE_NAME="${{ steps.release.outputs.name }}"
             RELEASE_DIR="$DEPLOY_PATH/releases/$RELEASE_NAME"
 
