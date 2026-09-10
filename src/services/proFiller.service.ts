@@ -79,7 +79,7 @@ export async function fillMissingTranslations(
   const updatedCueTexts = new Map<number, string>();
   pending.forEach((fill, i) => {
     const cueText = updatedCueTexts.get(fill.cueIndex) ?? cueSpans[fill.cueIndex].text;
-    const newBody = setNoSupersubText(fill.body, escapeProtoString(translations[i].translation));
+    const newBody = setNoSupersubText(fill.body, escapeProtoString(translations[i].translation.toUpperCase()));
     const newField = buildRtfDataField(newBody);
     const oldField = buildRtfDataField(fill.body);
     updatedCueTexts.set(fill.cueIndex, cueText.replace(oldField, newField));

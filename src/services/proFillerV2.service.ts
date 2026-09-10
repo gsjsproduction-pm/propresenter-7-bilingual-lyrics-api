@@ -68,7 +68,7 @@ export async function fillMissingTranslationsV2(
   let translationCursor = 0;
   pending.forEach((fill) => {
     const translatedSegments = fill.primarySegments.map(
-      () => translations[translationCursor++].translation,
+      () => translations[translationCursor++].translation.toUpperCase(),
     );
     const cueText = updatedCueTexts.get(fill.cueIndex) ?? cueSpans[fill.cueIndex].text;
     const escapedSegments = translatedSegments.map((t) => escapeProtoString(t));

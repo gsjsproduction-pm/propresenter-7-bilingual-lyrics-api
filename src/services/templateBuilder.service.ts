@@ -57,8 +57,8 @@ export function buildPresentationFromLines(templateDecodedText: string, lines: B
     const { text, newCueUuid } = regenerateCueUuids(templateCueBlock, originalCueUuid);
     generatedCueUuids.push(newCueUuid);
     return text
-      .replace("PRIMARY_TEXT", escapeProtoString(line.primaryText))
-      .replace("SECONDARY_TEXT", escapeProtoString(line.secondaryText));
+      .replace("PRIMARY_TEXT", escapeProtoString(line.primaryText.toUpperCase()))
+      .replace("SECONDARY_TEXT", escapeProtoString(line.secondaryText.toUpperCase()));
   });
 
   const newCueIdentifiers = generatedCueUuids

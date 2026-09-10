@@ -37,11 +37,13 @@ export async function translateLinesIdEn(
 
   const systemContent =
     "You translate worship/lyric lines between Indonesian and English for a bilingual ProPresenter slide. " +
-    "For each input line, detect whether it is Indonesian ('id') or English ('en'), then translate it into " +
-    "the OTHER language. Keep translations natural, singable, and concise — matching the line's meaning and " +
-    "tone rather than a stiff literal translation. Return strict JSON: " +
-    '{"lines":[{"original":"...","translation":"...","detectedLanguage":"id"|"en"}, ...]} ' +
-    "with exactly one output object per input line, in the same order." +
+    "Each input line carries an `index`. For each input line, detect whether it is Indonesian ('id') or " +
+    "English ('en'), then translate it into the OTHER language. Keep translations natural, singable, and " +
+    "concise — matching the line's meaning and tone rather than a stiff literal translation. Return strict " +
+    "JSON: " +
+    '{"lines":[{"index":0,"original":"...","translation":"...","detectedLanguage":"id"|"en"}, ...]} ' +
+    "with exactly one output object per input line, echoing back its original `index`. Never merge, split, " +
+    "skip, or reorder lines — even blank ones." +
     (additionalContextEn?.trim()
       ? `\n\nAdditional context from the requester (in English) to guide the translation: ${additionalContextEn.trim()}`
       : "");
@@ -57,7 +59,9 @@ export async function translateLinesIdEn(
       },
       {
         role: "user",
-        content: JSON.stringify({ lines }),
+        content: JSON.stringify({
+          lines: lines.map((line, index) => ({ index, line })),
+        }),
       },
     ],
   });
@@ -67,9 +71,29 @@ export async function translateLinesIdEn(
     throw new Error("Empty response from translation model");
   }
 
-  const parsed = JSON.parse(content) as { lines: TranslatedLine[] };
-  if (!Array.isArray(parsed.lines) || parsed.lines.length !== lines.length) {
-    throw new Error("Translation model returned a mismatched number of lines");
+  const parsed = JSON.parse(content) as {
+    lines: (TranslatedLine & { index?: number })[];
+  };
+  if (!Array.isArray(parsed.lines)) {
+    throw new Error("Translation model returned malformed output");
   }
-  return parsed.lines;
+
+  const byIndex = new Map<number, TranslatedLine>();
+  for (const entry of parsed.lines) {
+    if (typeof entry.index === "number") {
+      byIndex.set(entry.index, entry);
+    }
+  }
+
+  return lines.map((original, index) => {
+    const entry = byIndex.get(index);
+    if (!entry) {
+      return { original, translation: original, detectedLanguage: "en" };
+    }
+    return {
+      original,
+      translation: entry.translation,
+      detectedLanguage: entry.detectedLanguage,
+    };
+  });
 }
