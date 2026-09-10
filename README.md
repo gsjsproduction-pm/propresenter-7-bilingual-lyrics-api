@@ -63,8 +63,17 @@ Raw OpenAPI spec: **http://localhost:3000/openapi.json**
 | `fileName`            | string | no       | Output base file name. Defaults to the uploaded file's own name.    |
 | `additionalContextEn` | string | no       | Optional English guidance for the model.                             |
 
-Both endpoints stream the generated `.pro` back as a download **and** save a copy to the
-project's local `output/` folder for on-machine testing.
+### `POST /api/presentations/v2/from-pro`
+
+Same request/response shape as `/from-pro`. Reads the primary (fs104) lyric text by
+concatenating every `\cb3 <text>` run in the rtf body, so a lyric line wrapped across
+multiple `\par\pard...\cb3` runs within the same text box is translated as one combined
+line instead of only its last segment.
+
+All three endpoints stream the generated `.pro` back as a download. When
+`NODE_ENV=local`, they additionally save a copy to the project's local `output/` folder
+for on-machine testing; in any other environment the file is only streamed in the
+response, not written to disk.
 
 ## Project layout
 
@@ -74,7 +83,7 @@ src/
   index.ts                         # express app + swagger mount
   swagger.ts                       # OpenAPI schema/components
   routes/presentation.routes.ts    # routes + @openapi doc comments
-  controllers/                     # from-text / from-pro request handlers
+  controllers/                     # from-text / from-pro / v2/from-pro request handlers
   services/
     proto.service.ts               # protoc decode/encode (spawns the CLI)
     braceScanner.ts                # string-literal-aware brace matching for protoc text format
@@ -82,6 +91,7 @@ src/
     cue.service.ts                 # clone a cue block with fresh UUIDs
     templateBuilder.service.ts     # build a full presentation from lines + the template
     proFiller.service.ts           # fill missing translations in an uploaded presentation
+    proFillerV2.service.ts         # v2: same, but combines multi-run wrapped lyric lines
     translate.service.ts           # LLM translation call (OpenRouter)
   utils/
 proto/autogen-proto/                # ProPresenter's .proto definitions (propresenter.proto is the entry point)
