@@ -71,9 +71,9 @@ jobs:
             ln -sfn "$RELEASE_DIR" "$DEPLOY_PATH/current"
 
             cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/current/.env"
-            
+
             cd "$DEPLOY_PATH/current"
-            pm2 startOrReload ecosystem.config.js
+            pm2 startOrReload ecosystem.config.js --update-env --env production
 
             cd "$DEPLOY_PATH/releases"
             ls -1t | tail -n +$((${{ env.RELEASES_TO_KEEP }} + 1)) | xargs -r rm -rf
