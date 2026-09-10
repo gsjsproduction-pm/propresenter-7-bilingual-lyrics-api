@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p release_package
           cp -r dist release_package/dist
-          cp proto release_package/proto
+          cp -r proto release_package/proto
           cp default_template_billingual.pro release_package/default_template_billingual.pro
           cp package.json package-lock.json ecosystem.config.js release_package/
 
