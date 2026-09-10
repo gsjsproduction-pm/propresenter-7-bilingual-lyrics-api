@@ -70,6 +70,8 @@ jobs:
 
             ln -sfn "$RELEASE_DIR" "$DEPLOY_PATH/current"
 
+            cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/current/.env"
+            
             cd "$DEPLOY_PATH/current"
             pm2 startOrReload ecosystem.config.js
 
