@@ -35,6 +35,7 @@ jobs:
         run: |
           mkdir -p release_package
           cp -r dist release_package/dist
+          cp default_template_billingual.pro
           cp package.json package-lock.json ecosystem.config.js release_package/
 
       - name: Install SSH key
