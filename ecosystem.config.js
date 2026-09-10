@@ -1,5 +1,5 @@
 const path = require("path");
-const cwdPath = "/home/ubuntu/propresenter-bilingual-lyrics-api";
+const cwdPath = "/home/ubuntu/propresenter-bilingual-lyrics-api/current";
 
 // Load the environment variables
 const result = require("dotenv").config({ path: path.join(cwdPath, ".env") });
@@ -15,7 +15,7 @@ module.exports = {
   apps: [
     {
       name: "propresenter-bilingual-api",
-      script: "dist/index.js",
+      script: "./dist/index.js",
       cwd: cwdPath,
       instances: 1,
       exec_mode: "fork",
