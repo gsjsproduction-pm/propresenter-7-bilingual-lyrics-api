@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { decodePresentation, encodePresentation } from "../services/proto.service";
 import { fillMissingTranslationsV2 } from "../services/proFillerV2.service";
+import { decodePresentation, encodePresentation } from "../services/proto.service";
 import { saveOutputFile } from "../utils/tempfile";
 
 export async function fromProV2Handler(req: Request, res: Response): Promise<void> {
@@ -33,6 +33,8 @@ export async function fromProV2Handler(req: Request, res: Response): Promise<voi
   }
 
   res.setHeader("Content-Type", "application/octet-stream");
-  res.setHeader("Content-Disposition", `attachment; filename="${safeName} TRANSLATED.pro"`);
+  const originalFilename = `${baseName} TRANSLATED.pro`;
+  const encodedFilename = encodeURIComponent(originalFilename);
+  res.setHeader("Content-Disposition", `attachment; filename="${safeName} TRANSLATED.pro"; filename*=UTF-8''${encodedFilename}`);
   res.send(proBuffer);
 }

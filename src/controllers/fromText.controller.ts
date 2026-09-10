@@ -62,6 +62,8 @@ export async function fromTextHandler(req: Request, res: Response): Promise<void
   }
 
   res.setHeader("Content-Type", "application/octet-stream");
-  res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pro"`);
+  const originalFilename = `${fileName.replace(/\.pro$/i, "")}.pro`;
+  const encodedFilename = encodeURIComponent(originalFilename);
+  res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pro"; filename*=UTF-8''${encodedFilename}`);}
   res.send(proBuffer);
 }
